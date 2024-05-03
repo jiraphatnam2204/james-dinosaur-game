@@ -8,7 +8,7 @@ let context;
 let dinowidth = 88;
 let dinoheight = 94;
 let dinox = 50;
-let dinoy = boardheight - dinoheight;
+let dinoy = boardheight - dinoheight; // 156
 let dinoimg;
 
 let dino = {
@@ -31,6 +31,14 @@ let cactusy = boardheight - cactusheight;
 let cactus1img;
 let cactus2img;
 let cactus3img;
+
+// physics
+let velocityx = -8;
+let velocityy = 0;
+let gravity = 0.4;
+
+let gameover = false;
+let score = 0;
 
 
 window.onload = function(){
@@ -58,11 +66,48 @@ window.onload = function(){
 
     requestAnimationFrame(update);
     setInterval(placecactus, 1000);
+    document.addEventListener("keydown", movedino);
 }
 
 function update(){
     requestAnimationFrame(update);
+    if(gameover){
+        return;
+    }
+    context.clearRect(0, 0, board.width, board.height);
     
+    velocityy += gravity;
+    dino.y = Math.min(dino.y+velocityy, dinoy);
+    context.drawImage(dinoimg, dino.x, dino.y, dino.width, dino.height);
+
+    for (let i=0; i<cactus_array.length; i++){
+        let cactus = cactus_array[i];
+        cactus.x += velocityx;
+        context.drawImage(cactus.img, cactus.x, cactus.y, cactus.width, cactus.height);
+        if(detectcollision(dino, cactus)){
+            gameover = true;
+            dinoimg.src = "./img/dino-dead.png";
+            dinoimg.onload = function(){
+                context.drawImage(dinoimg, dino.x, dino.y, dino.width, dino.height);
+            }
+        }
+    }
+
+    context.fillStyle = "black";
+    context.font = "20px courier";
+    score++;
+    context.fillText(score, 5, 20);
+}
+
+function movedino(e){
+    if(gameover){
+        return;
+    }
+    if((e.code == "Space" || e.code == "ArrowUp") && (dino.y == dinoy)){
+        velocityy=-10;
+    } else if((e.code=="ArrowDown") && (dino.y == dinoy)){
+        // comment
+    }
 }
 
 function placecactus(){
@@ -90,6 +135,15 @@ function placecactus(){
         cactus_array.push(cactus);
     }
 
-    
+    if(cactus_array.length>5){
+        cactus_array.shift;
+    }
 
+}
+
+function detectcollision(a, b){
+    return a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y;
 }
